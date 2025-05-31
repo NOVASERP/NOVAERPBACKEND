@@ -9,7 +9,9 @@ const Routes = require("./routes");
 
 app.use(cors());
 app.use(express.json());
-
+app.use(express.urlencoded({ extended: true }));
+ 
+const sms=require("./common/twillioSms")
 // var corsOptions = {
 //   origin: "*",
 // };
@@ -26,7 +28,7 @@ app.use((req, res, next) => {
 
 // ✅ Register routes BEFORE starting the server
 Routes(app);
-
+// sms.sendSMS('+918115199076',"Hello Mohit i am trying to implement twilio!")
 app.listen(PORT, () => {
   console.log(`Secure app is listening @port ${PORT}`);
 });

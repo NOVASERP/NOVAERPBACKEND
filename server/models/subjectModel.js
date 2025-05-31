@@ -6,4 +6,4 @@ const subjectSchema = new mongoose.Schema({
   classes: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Class' }],
 }, { timestamps: true });
 
-module.exports = mongoose.model('Subject', subjectSchema);
+module.exports = mongoose.model('Subjects', subjectSchema);
