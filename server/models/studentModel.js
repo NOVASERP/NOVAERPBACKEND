@@ -13,13 +13,14 @@ const studentSchema = new mongoose.Schema(
       type: String,
       enum: [genderType.FEMALE, genderType.MALE, genderType.OTHER],
     },
-    aadharNumber: { type: String },
     phoneNumber: { type: String },
     email: { type: String },
-    address: { type: String },
-    city: { type: String },
-    state: { type: String },
-    pinCode: { type: String },
+    address: {
+      homeTown: { type: String },
+      city: { type: String },
+      state: { type: String },
+      pinCode: { type: String },
+    },
     parentsDetails: {
       fatherName: { type: String },
       motherName: { type: String },
@@ -27,15 +28,21 @@ const studentSchema = new mongoose.Schema(
       guardianPhone: { type: String },
       guardianRelationship: { type: String },
     },
-    classes: [
+    currentClass: {
+      class: { type: mongoose.Types.ObjectId, ref: "Class" },
+      section: { type: String },
+      rollNumber: { type: String },
+    },
+    classHistory: [
       {
-        class: { type: String },
+        class: { type: mongoose.Types.ObjectId, ref: "Class" },
         section: { type: String },
         rollNumber: { type: String },
-        admissionDate: { type: String },
         sessionYear: { type: String },
+        admissionDate: { type: Date },
       },
     ],
+
     userType: { type: String, default: userType.STUDENT },
     examResults: [
       {
@@ -44,9 +51,26 @@ const studentSchema = new mongoose.Schema(
       },
     ],
     status: { type: String, default: status.ACTIVE },
-    password:{type:String,default:"nova1234"},
-    admissionNumber: { type: String },
-
+    password: { type: String, default: "nova1234" },
+    admissionNumber: { type: String, unique: true },
+    addedBy: { type: mongoose.Types.ObjectId, ref: "Staff" },
+    studentImage: { type: String },
+    bloodGroup: { type: String },
+    emergencyContact: {
+      name: { type: String },
+      relationship: { type: String },
+      contactNumber: { type: String },
+    },
+    proof: {
+      aadharCard: { image: { type: String }, aadharNo: { type: String } },
+      birthCertificate: { image: { type: String } },
+      tc: { image: { type: String } },
+    },
+    religion: { type: String },
+    casteCategory: { type: String }, // e.g., General, OBC, SC, ST
+    nationality: { type: String },
+    languagesKnown: [{ type: String }],
+    disability: { type: Boolean, default: false },
   },
   { timestamps: true }
 );

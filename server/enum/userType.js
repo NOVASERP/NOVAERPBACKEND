@@ -3,5 +3,6 @@ module.exports = Object.freeze({
     STUDENT: 'STUDENT',
     TEACHER: 'TEACHER',
     SUBADMIN:'SUBADMIN',
-    PARENTS:'PARENTS'
+    PARENTS:'PARENTS',
+    NON_TEACHING:'NON_TEACHING'
 })

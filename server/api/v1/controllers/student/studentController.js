@@ -19,7 +19,10 @@ const {
 exports.studentCreation = async (req, res, next) => {
   try {
     let { data } = req.body;
-    const isEmailExist = await findStudent({ email: data.email });
+    const requestData=JSON.parse(data)
+    console.log("data.email====",data);
+    
+    const isEmailExist = await findStudent({ email: requestData.email });
     if (isEmailExist) {
       return res.status(statusCode.OK).send({
         statusCode: statusCode.Conflict,
@@ -27,15 +30,15 @@ exports.studentCreation = async (req, res, next) => {
         result: isEmailExist,
       });
     }
-    const admissionDateStr = new Date(data?.classes?.[0]?.admissionDate);
+    const admissionDateStr = new Date(requestData?.classes?.[0]?.admissionDate);
     const year = admissionDateStr.getFullYear();
     const count = await countTotalStudent({
       "classes.admissionDate": { $gte: `01-01-${year}`, $lte: `31-12-${year}` },
     });
     const incrementedCount = count + 1;
-    const paddedCount = String(incrementedCount).padStart(3, "0");
-    data.admissionNumber = `ADM${year}${paddedCount}`;
-    const result = await createStudent(data);
+    const paddedCount = String(incrementedCount).padStart(2, "0");
+    requestData.admissionNumber = `ADM${year}${requestData.currentClass.section}${requestData.currentClass.rollNumber}${paddedCount}`;
+    const result = await createStudent(requestData);
     return res.status(statusCode.OK).send({
       statusCode: statusCode.OK,
       responseMessage: responseMessage.STUDENT_ADDED,
@@ -64,4 +67,30 @@ exports.getAllStudent = async (req, res, next) => {
     return next(error);
   }
 };
+
+exports.editStudentDetails=async  (req,res,next)=>{
+  try {
+    const {}=req.body;
+    const isAdminExist=await a();
+    if(!isAdminExist){
+       return res.status(statusCode.OK).send({
+        statusCode: statusCode.badRequest,
+        responseMessage: responseMessage.UNAUTHORIZED,
+      });
+    }
+    const obj={
+
+    }
+    const updateProfile=await updateStudent({_id:stdId},{obj});
+     return res.status(statusCode.OK).send({
+      statusCode: statusCode.OK,
+      responseMessage: responseMessage.UPDATE_SUCCESS,
+      result: updateProfile,
+    });
+  } catch (error) {
+    console.log("Error while trying to edit profile",error);
+    return next(error);
+    
+  }
+}
 
