@@ -41,5 +41,6 @@ module.exports = {
 	PROFILE_GET: 'Fetch profile data Successfully',
 	INTERNAL_ERROR: 'Internal Error',
 	NOT_FOUND: 'Not Found',
-    STUDENT_ADDED:'Student created successfully'
+    STUDENT_ADDED:'Student created successfully',
+	EMAIL_NOT_FOUND:"Invalid email or password."
 };

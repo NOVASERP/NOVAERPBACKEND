@@ -71,6 +71,7 @@ const studentSchema = new mongoose.Schema(
     nationality: { type: String },
     languagesKnown: [{ type: String }],
     disability: { type: Boolean, default: false },
+    userId: { type: String },
   },
   { timestamps: true }
 );

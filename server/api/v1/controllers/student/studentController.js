@@ -15,6 +15,15 @@ const {
   updateStudent,
   countTotalStudent,
 } = studentServices;
+const { userServices } = require("../../services/userServices");
+const {
+  createUser,
+  findUser,
+  findUserData,
+  deleteUser,
+  updateUser,
+  countTotalUser,
+} = userServices;
 
 exports.studentCreation = async (req, res, next) => {
   try {
@@ -38,7 +47,13 @@ exports.studentCreation = async (req, res, next) => {
     const incrementedCount = count + 1;
     const paddedCount = String(incrementedCount).padStart(2, "0");
     requestData.admissionNumber = `ADM${year}${requestData.currentClass.section}${requestData.currentClass.rollNumber}${paddedCount}`;
+       const totalUsers = await countTotalUser(); 
+    const newUserCount = totalUsers + 1;
+    const paddedUserCount = String(newUserCount).padStart(6, "0");
+    requestData.userId = `nova${paddedUserCount}`;
     const result = await createStudent(requestData);
+
+    await createUser({userId:requestData.userId,effDate:requestData.admissionDate,role:userType.STUDENT,newUserCount})
     return res.status(statusCode.OK).send({
       statusCode: statusCode.OK,
       responseMessage: responseMessage.STUDENT_ADDED,
