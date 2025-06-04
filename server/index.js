@@ -4,7 +4,11 @@ const app = express();
 const PORT = process.env.PORT || 5000;
 require("dotenv").config();
 require("./config/dbConnection");
+const bodyParser = require("body-parser");
 
+// Increase body size limit
+app.use(bodyParser.json({ limit: "50mb" }));
+app.use(bodyParser.urlencoded({ limit: "50mb", extended: true }));
 const Routes = require("./routes");
 
 app.use(cors());

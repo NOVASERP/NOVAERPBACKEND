@@ -3,10 +3,11 @@ const cloudinary = require ("cloudinary");
 const qrcode = require ("qrcode");
 const envURL="CLOUDINARY_URL=cloudinary://762768618877418:bifc8xU3WVckZWcKPwMRKehQnaA@dxvwvoj0y"
 cloudinary.config({
-  cloud_name: "dxvwvoj0y",
-  api_key: "762768618877418",
-  api_secret: "-bifc8xU3WVckZWcKPwMRKehQnaA",
+  cloud_name: process.env.CLOUD_NAME,
+  api_key: process.env.API_KEY,
+  api_secret: process.env.API_SECRET,
 });
+
 
 
 module.exports = {
@@ -32,9 +33,13 @@ module.exports = {
       return error;
     }
   },
-  getSecureUrl: async (base64) => {
+  getSecureUrl: async (base64,folderName) => {
     try {
-      const data = await cloudinary.v2.uploader.upload(base64);
+      const data = await cloudinary.v2.uploader.upload(base64, {
+        folder: folderName, // optional folder
+      });
+      console.log("data.secure_url==",data.secure_url);
+      
       return data.secure_url;
     } catch (error) {
       return error;

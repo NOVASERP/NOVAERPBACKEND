@@ -17,7 +17,7 @@ const {
 
 exports.createUiTheme = async (req, res, next) => {
   try {
-    const {
+    let {
       logo,
       loginImage,
       schoolName,
@@ -32,17 +32,18 @@ exports.createUiTheme = async (req, res, next) => {
       cardColor,
       navbarColor,
     } = req.body;
-    const images = [logo, loginImage, favIcon];
-    for (var i = 0; i < images.length; i++) {
-      console.log("images=====", images);
+    const imageKeys = ["logo", "loginImage", "favIcon"];
 
-      console.log("i===========", i);
-      const imageUrl = await commonFunction(images[i]);
-      console.log("images[i]====", images[i]);
-
-      req.body.images[i] = imageUrl;
+    for (let key of imageKeys) {
+      let base64Image = req.body[key];
+      if (base64Image) {
+        if (!base64Image.startsWith("data:image")) {
+          base64Image = `data:image/jpeg;base64,${base64Image}`;
+        }
+        const url = await commonFunction.getSecureUrl(base64Image, "UIImages");
+        req.body[key] = url;
+      }
     }
-
     const result = await createUiDes(req.body);
     return res.status(statusCode.OK).json({
       statusCode: statusCode.OK,
