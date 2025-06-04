@@ -32,15 +32,15 @@ exports.createUiTheme = async (req, res, next) => {
       cardColor,
       navbarColor,
     } = req.body;
-    const images=[logo,loginImage,favIcon]
+    const images = [logo, loginImage, favIcon];
     for (var i = 0; i < images.length; i++) {
-        console.log("images=====",images);
-        
-        console.log("i===========",i);
+      console.log("images=====", images);
+
+      console.log("i===========", i);
       const imageUrl = await commonFunction(images[i]);
-      console.log("images[i]====",images[i]);
-      
-      req.body.images[i] =imageUrl;
+      console.log("images[i]====", images[i]);
+
+      req.body.images[i] = imageUrl;
     }
 
     const result = await createUiDes(req.body);
@@ -49,5 +49,26 @@ exports.createUiTheme = async (req, res, next) => {
       responseMessage: responseMessage.UI_CREATE_SUCCES,
       result: result,
     });
-  } catch (error) {}
+  } catch (error) {
+    return next(error);
+  }
+};
+
+exports.getUiDesign = async (req, res, next) => {
+  try {
+    const result = await findUiDesign({});
+    if (!result) {
+      return res.status(statusCode.OK).json({
+        statusCode: statusCode.NotFound,
+        responseMessage: responseMessage.UI_CREATE_SUCCES,
+      });
+    }
+    return res.status(statusCode.OK).json({
+      statusCode: statusCode.OK,
+      responseMessage: responseMessage.DATA_FOUND,
+      result: result,
+    });
+  } catch (error) {
+    return next(error);
+  }
 };
