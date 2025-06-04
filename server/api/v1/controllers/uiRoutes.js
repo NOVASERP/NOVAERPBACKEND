@@ -4,6 +4,6 @@ const uiController = require('./uiController');
 
 // Define your routes on the router
 router.post("/uiController", uiController.createUiTheme);
-// router.get("/getStudentList", staffController.getAllStudent);
+router.get("/getUiDesign", uiController.getUiDesign);
 
 module.exports = router;
