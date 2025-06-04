@@ -15,6 +15,7 @@
   "license": "ISC",
   "dependencies": {
     "bcryptjs": "^3.0.2",
+    "cloudinary": "^2.6.1",
     "cors": "^2.8.5",
     "dotenv": "^16.5.0",
     "express": "^5.1.0",
@@ -23,6 +24,7 @@
     "mongoose-aggregate-paginate-v2": "^1.1.4",
     "mongoose-paginate-v2": "^1.9.0",
     "nodemon": "^3.1.10",
+    "qrcode": "^1.5.4",
     "twilio": "^5.6.1"
   }
 }

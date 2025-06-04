@@ -50,7 +50,7 @@ exports.Login = async (req, res, next) => {
     return res
       .status(statusCode.OK)
       .json({
-        statusCode: statusCode.badRequest,
+        statusCode: statusCode.OK,
         responseMessage: responseMessage.LOGIN,
         result: {isUserExist,getToken},
       });

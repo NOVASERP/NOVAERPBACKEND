@@ -42,5 +42,6 @@ module.exports = {
 	INTERNAL_ERROR: 'Internal Error',
 	NOT_FOUND: 'Not Found',
     STUDENT_ADDED:'Student created successfully',
-	EMAIL_NOT_FOUND:"Invalid email or password."
+	EMAIL_NOT_FOUND:"Invalid email or password.",
+	UI_CREATE_SUCCES:"Ui created Success theme."
 };
