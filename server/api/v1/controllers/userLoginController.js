@@ -26,7 +26,7 @@ const {
 exports.Login = async (req, res, next) => {
   try {
     const { userId, password } = req.body;
-    const isUserExist = await findStaff({ userId: userId });
+    const isUserExist = await findUser({ userId: userId });
     if (!isUserExist) {
       return res.status(statusCode.OK).send({
         statusCode: statusCode.NotFound,

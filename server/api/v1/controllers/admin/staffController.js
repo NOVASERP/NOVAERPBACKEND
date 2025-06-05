@@ -29,7 +29,7 @@ exports.staffCreation = async (req, res, next) => {
     const requestData = JSON.parse(data);
     console.log("data.email====", data);
 
-    const isEmailExist = await findStudent({ email: requestData.email });
+    const isEmailExist = await findStaff({ email: requestData.email });
     if (isEmailExist) {
       return res.status(statusCode.OK).send({
         statusCode: statusCode.Conflict,
@@ -37,7 +37,11 @@ exports.staffCreation = async (req, res, next) => {
         result: isEmailExist,
       });
     }
-    const result = await createStudent(requestData);
+       const totalUsers = await countTotalUser(); 
+    const newUserCount = totalUsers + 1;
+    const paddedUserCount = String(newUserCount).padStart(6, "0");
+    requestData.userId = `nova${paddedUserCount}`;
+    const result = await createStaff(requestData);
     return res.status(statusCode.OK).send({
       statusCode: statusCode.OK,
       responseMessage: responseMessage.STUDENT_ADDED,
