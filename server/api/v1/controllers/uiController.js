@@ -73,3 +73,26 @@ exports.getUiDesign = async (req, res, next) => {
     return next(error);
   }
 };
+
+exports.editUi=async(req,res,next)=>{
+  try {
+    const { logo,
+      loginImage,
+      schoolName,
+      favIcon,
+      buttonColor,
+      address,
+      websiteUrl,
+      email,
+      contactNo,
+      hoverColor,
+      sliderColor,
+      cardColor,
+      navbarColor,}=req.body;
+      if(logo||loginImage||favIcon){
+        
+      }
+  } catch (error) {
+    return next(error)
+  }
+}

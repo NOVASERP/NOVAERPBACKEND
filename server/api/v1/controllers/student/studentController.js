@@ -109,3 +109,11 @@ exports.editStudentDetails=async  (req,res,next)=>{
   }
 }
 
+exports.deleteSTudents=async(req,res,next)=>{
+  try {
+    
+  } catch (error) {
+    
+  }
+}
+
