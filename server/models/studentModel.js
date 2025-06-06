@@ -50,7 +50,7 @@ const studentSchema = new mongoose.Schema(
         ref: "ExamResult",
       },
     ],
-    status: { type: String, default: status.ACTIVE },
+    status: { type: String,enum: Object.values(status), default: status.ACTIVE },
     password: { type: String, default: "nova1234" },
     admissionNumber: { type: String, unique: true },
     addedBy: { type: mongoose.Types.ObjectId, ref: "Staff" },
