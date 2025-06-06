@@ -43,5 +43,6 @@ module.exports = {
 	NOT_FOUND: 'Not Found',
     STUDENT_ADDED:'Student created successfully',
 	EMAIL_NOT_FOUND:"Invalid email or password.",
-	UI_CREATE_SUCCES:"Ui created Success theme."
+	UI_CREATE_SUCCES:"Ui created Success theme.",
+	NOTICE_CREATE_SUCCESS:"Notice created successfully"
 };

@@ -27,7 +27,6 @@ exports.staffCreation = async (req, res, next) => {
   try {
     let { data } = req.body;
     const requestData = JSON.parse(data);
-    console.log("data.email====", data);
 
     const isEmailExist = await findStaff({ email: requestData.email });
     if (isEmailExist) {
