@@ -14,12 +14,17 @@ const {
   countTotalNotice,
 } = noticeBrdServices;
 
-
-
-
 exports.createNotice = async (req, res, next) => {
   try {
-    const { title, message, attachmentUrl, targetRoles, visibleFrom, visibleTill,publishedBy } = req.body;
+    const {
+      title,
+      message,
+      attachmentUrl,
+      targetRoles,
+      visibleFrom,
+      visibleTill,
+      publishedBy,
+    } = req.body;
     // const publishedBy = req.user._id; // assuming JWT or session-based login
 
     const notice = await createNotice({
@@ -32,29 +37,36 @@ exports.createNotice = async (req, res, next) => {
       publishedBy,
     });
     return res.status(statusCode.OK).send({
-          statusCode: statusCode.OK,
-          responseMessage: responseMessage.NOTICE_CREATE_SUCCESS,
-          result: notice,
-        });
+      statusCode: statusCode.OK,
+      responseMessage: responseMessage.NOTICE_CREATE_SUCCESS,
+      result: notice,
+    });
   } catch (err) {
     next(err);
   }
 };
-
 
 exports.getNoticesByRole = async (req, res, next) => {
   try {
     const userRole = req.query.role; // 'STUDENT' | 'TEACHER' | etc.
     const today = new Date();
 
-    const notices = await Notice.find({
-      targetRoles: userRole,
+    const notices = await findNoticeData({
+      targetRoles: { $in: [userRole] },
       isActive: true,
-      visibleFrom: { $lte: today },
-      visibleTill: { $gte: today }
-    }).sort({ createdAt: -1 });
-
-    res.status(200).json({ success: true, notices });
+      status: statusType.ACTIVE,
+    });
+    if (!notices || notices.length < 0) {
+      return res.status(statusCode.OK).send({
+        statusCode: statusCode.NotFound,
+        responseMessage: responseMessage.DATA_NOT_FOUND,
+      });
+    }
+    return res.status(statusCode.OK).send({
+      statusCode: statusCode.OK,
+      responseMessage: responseMessage.DATA_FOUND,
+      result: notices,
+    });
   } catch (err) {
     next(err);
   }

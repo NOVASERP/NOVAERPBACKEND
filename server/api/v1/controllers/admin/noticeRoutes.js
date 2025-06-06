@@ -4,6 +4,6 @@ const noticeController = require('./noticeController');
 
 // Define your routes on the router
 router.post("/createNotice", noticeController.createNotice);
-// router.get("/getStudentList", staffController.getAllStudent);
+router.get("/getNoticesByRole", noticeController.getNoticesByRole);
 
 module.exports = router;
