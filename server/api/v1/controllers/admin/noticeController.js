@@ -71,3 +71,22 @@ exports.getNoticesByRole = async (req, res, next) => {
     next(err);
   }
 };
+
+exports.getNoticeHistory=async(req,res,next)=>{
+  try {
+    const result=await findNoticeData();
+    if (!result || result.length < 0) {
+      return res.status(statusCode.OK).send({
+        statusCode: statusCode.NotFound,
+        responseMessage: responseMessage.DATA_NOT_FOUND,
+      });
+    }
+    return res.status(statusCode.OK).send({
+      statusCode: statusCode.OK,
+      responseMessage: responseMessage.DATA_FOUND,
+      result: result,
+    });
+  } catch (error) {
+    return next(error);
+  }
+}
