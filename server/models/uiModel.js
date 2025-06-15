@@ -7,6 +7,7 @@ const uiSchema=new mongoose.Schema({
    logo:{type:String},
    loginImage:{type:String},
    schoolName:{type:String},
+   // schoolDomain:{type:String},
    favIcon:{type:String},
    buttonColor:{type:String},
    address:{type:String},

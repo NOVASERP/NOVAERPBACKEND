@@ -128,6 +128,7 @@ const Staff = mongoose.model("Staff", staffSchema);
       await createUser({
         userId: userId,
         effDate: addedDate,
+        password:hashedPassword,
         role: roleType.ADMIN,
         newUserCount,
       });

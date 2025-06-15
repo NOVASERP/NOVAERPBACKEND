@@ -24,7 +24,7 @@ const {
   updateUser,
   countTotalUser,
 } = userServices;
-
+const defPass=process.env.DEFAULT_PASSWORD
 exports.studentCreation = async (req, res, next) => {
   try {
     let { data } = req.body;
@@ -39,6 +39,9 @@ exports.studentCreation = async (req, res, next) => {
         result: isEmailExist,
       });
     }
+console.log("defPass==",defPass);
+
+    const hashedPassword=await bcrypt.hashSync(defPass,10);
     const admissionDateStr = new Date(requestData?.classes?.[0]?.admissionDate);
     const year = admissionDateStr.getFullYear();
     const count = await countTotalStudent({
@@ -53,7 +56,7 @@ exports.studentCreation = async (req, res, next) => {
     requestData.userId = `nova${paddedUserCount}`;
     const result = await createStudent(requestData);
 
-    await createUser({userId:requestData.userId,effDate:requestData.admissionDate,role:userType.STUDENT,newUserCount})
+    await createUser({userId:requestData.userId,password:hashedPassword,effDate:requestData.admissionDate,role:userType.STUDENT,newUserCount})
     return res.status(statusCode.OK).send({
       statusCode: statusCode.OK,
       responseMessage: responseMessage.STUDENT_ADDED,
