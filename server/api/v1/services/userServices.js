@@ -25,7 +25,10 @@ const userServices={
 
      countTotalUser: async (body) => {
         return await userModel.countDocuments(body);
-    }    
+    }   ,
+    findUserPop: async (query) => {
+        return await userModel.findOne(query).populate('userId');
+    }, 
 }
 
 module.exports={userServices}
