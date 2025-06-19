@@ -27,6 +27,8 @@ exports.Login = async (req, res, next) => {
   try {
     const { userId, password } = req.body;
     const isUserExist = await findUser({ userId: userId });
+    console.log("isUserExist=============",isUserExist);
+    
     if (!isUserExist) {
       return res.status(statusCode.OK).send({
         statusCode: statusCode.NotFound,
