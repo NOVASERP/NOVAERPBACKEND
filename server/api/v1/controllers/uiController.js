@@ -31,6 +31,7 @@ exports.createUiTheme = async (req, res, next) => {
       sliderColor,
       cardColor,
       navbarColor,
+      effDate,
     } = req.body;
     const imageKeys = ["logo", "loginImage", "favIcon"];
 

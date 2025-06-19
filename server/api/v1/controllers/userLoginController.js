@@ -26,8 +26,10 @@ const {
 exports.Login = async (req, res, next) => {
   try {
     const { userId, password } = req.body;
+    console.log(req.body)
     const isUserExist = await findUser({ userId: userId });
     if (!isUserExist) {
+      console.log({userId:userId});
       return res.status(statusCode.OK).send({
         statusCode: statusCode.NotFound,
         responseMessage: responseMessage.EMAIL_NOT_FOUND,

@@ -17,7 +17,9 @@ const uiSchema=new mongoose.Schema({
    hoverColor:{type:String},
    sliderColor:{type:String},
    cardColor:{type:String},
-   navbarColor:{type:String}
+   navbarColor:{type:String},
+   effDate:{type:Date}
+   
 })
 
 module.exports = mongoose.model("uiDesign", uiSchema);

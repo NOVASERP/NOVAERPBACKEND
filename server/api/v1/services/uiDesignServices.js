@@ -7,7 +7,7 @@ const uiDesServices={
     },
 
     findUiDesign: async (query) => {
-        return await uiModel.findOne(query);
+        return await uiModel.findOne(query).sort({ effDate: -1 }).lean();
     },
 
     findUiDesData: async (query) => {
