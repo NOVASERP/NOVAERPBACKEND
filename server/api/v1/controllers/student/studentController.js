@@ -29,18 +29,6 @@ exports.studentCreation = async (req, res, next) => {
   try {
     let { data } = req.body;
     const requestData=JSON.parse(data)
-    console.log("data.email====",data);
-    
-    const isEmailExist = await findStudent({ email: requestData.email });
-    if (isEmailExist) {
-      return res.status(statusCode.OK).send({
-        statusCode: statusCode.Conflict,
-        responseMessage: responseMessage.EMAIL_EXIST,
-        result: isEmailExist,
-      });
-    }
-console.log("defPass==",defPass);
-
     const hashedPassword=await bcrypt.hashSync(defPass,10);
     const admissionDateStr = new Date(requestData?.classes?.[0]?.admissionDate);
     const year = admissionDateStr.getFullYear();
