@@ -54,6 +54,10 @@ console.log("defPass==",defPass);
     const newUserCount = totalUsers + 1;
     const paddedUserCount = String(newUserCount).padStart(6, "0");
     requestData.userId = `nova${paddedUserCount}`;
+    console.log("requestData====",requestData);
+    hashedPassword.password=hashedPassword;
+    console.log("requestData==",requestData)
+
     const result = await createStudent(requestData);
 
     await createUser({userId:requestData.userId,password:hashedPassword,effDate:requestData.admissionDate,role:userType.STUDENT,newUserCount})

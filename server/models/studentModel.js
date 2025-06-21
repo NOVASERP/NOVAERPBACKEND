@@ -51,7 +51,7 @@ const studentSchema = new mongoose.Schema(
       },
     ],
     status: { type: String,enum: Object.values(status), default: status.ACTIVE },
-    password: { type: String, default: "nova1234" },
+    password: { type: String},
     admissionNumber: { type: String, unique: true },
     addedBy: { type: mongoose.Types.ObjectId, ref: "Staff" },
     studentImage: { type: String },
