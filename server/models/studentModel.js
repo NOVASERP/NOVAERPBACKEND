@@ -7,6 +7,7 @@ mongoose.pluralize(null);
 const studentSchema = new mongoose.Schema(
   {
     firstName: { type: String },
+     middleName: { type: String },
     lastName: { type: String },
     dateOfBirth: { type: Date },
     gender: {
