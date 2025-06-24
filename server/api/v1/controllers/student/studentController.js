@@ -47,7 +47,7 @@ exports.studentCreation = async (req, res, next) => {
     console.log("requestData==",requestData)
 
     const result = await createStudent(requestData);
-
+  console.log ("result====",result);
     await createUser({userId:requestData.userId,password:hashedPassword,effDate:requestData.admissionDate,role:userType.STUDENT,newUserCount})
     return res.status(statusCode.OK).send({
       statusCode: statusCode.OK,
