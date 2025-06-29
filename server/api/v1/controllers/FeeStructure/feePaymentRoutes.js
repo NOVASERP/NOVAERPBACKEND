@@ -4,6 +4,6 @@ const feePaymentController = require('./feePaymentController');
 
 router.post('/create', feePaymentController.createFeePayment);
 router.get('/getallpayment', feePaymentController.getAllPayments);
-router.get('/:id', feePaymentController.getPaymentById);
+router.get('/:id', feePaymentController.getpaymentbyuserid);
 
 module.exports = router;

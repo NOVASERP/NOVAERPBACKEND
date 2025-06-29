@@ -1,16 +1,28 @@
 const FeePayment = require('../../../../models/FeePaymentSchema');
 const FeeStructure = require('../../../../models/FeeStructure');
-const Student = require('../../../../models/studentModel');
+const Student = require('../../../../models/studentModel'); // Make sure this model is used if needed, otherwise it's just an import
 
-// Auto-generate unique Serial No (you can also do this via a counter collection)
-let serialCounter = 1000;
+// Helper: Function to get the next serial number
+async function getNextSerialNo() {
+  try {
+    const latestPayment = await FeePayment.findOne().sort({ SerialNo: -1 }).lean();
+    // Use .lean() for faster retrieval as we only need the data, not a full Mongoose document
+
+    // If there's a latest payment, increment its SerialNo. Otherwise, start from 1.
+    return latestPayment ? latestPayment.SerialNo + 1 : 1;
+  } catch (error) {
+    console.error("Error generating SerialNo:", error);
+    // Depending on your error handling strategy, you might want to throw an error,
+    // or return a default/fallback value. For simplicity, let's throw.
+    throw new Error("Failed to generate Serial Number for fee payment.");
+  }
+}
 
 // Helper: Calculate total paid from paymentDetails
 const calculateTotalPaid = (paymentDetails) => {
   return paymentDetails.reduce((sum, comp) => sum + (comp.amountPaid || 0), 0);
 };
 
-// POST /fee-payment/create
 exports.createFeePayment = async (req, res) => {
   try {
     const {
@@ -22,26 +34,37 @@ exports.createFeePayment = async (req, res) => {
       feeStructureId,
       paymentDetails
     } = req.body;
+    console.log(feeStructureId);
 
-    // Validate essential fields
-    if (!userId || !admissionNumber || !studentClass || !academicYear || !feeStructureId || !paymentDetails) {
+    // Check required fields
+    if (!userId || !admissionNumber || !studentClass || !section || !academicYear || !feeStructureId || !paymentDetails?.length) {
       return res.status(400).json({ success: false, message: 'Missing required fields' });
     }
 
-    // Fetch the fee structure
+    // Get fee structure
     const feeStructure = await FeeStructure.findById(feeStructureId);
     if (!feeStructure) {
       return res.status(404).json({ success: false, message: 'Fee structure not found' });
     }
 
-    // Calculate totals
+    // Total paid from paymentDetails
     const totalPaid = calculateTotalPaid(paymentDetails);
-    const totalDue = feeStructure.totalMonthly + feeStructure.totalYearly + feeStructure.totalQuarterly + feeStructure.totalHalfYearly - totalPaid;
+    if (totalPaid <= 0) {
+      return res.status(400).json({ success: false, message: 'Total paid must be greater than zero' });
+    }
+    console.log(feeStructure.totalMonthly, feeStructure.totalYearly, feeStructure.totalQuarterly, feeStructure.totalHalfYearly, totalPaid);
 
-    // Generate unique SerialNo (use DB counter in production)
-    const SerialNo = serialCounter++;
-    
-    // Create and save new payment record
+    // Calculate due
+    const totalDue =
+      (feeStructure.totalMonthly || 0) +
+      (feeStructure.totalYearly || 0) +
+      (feeStructure.totalQuarterly || 0) +
+      (feeStructure.totalHalfYearly || 0) - totalPaid;
+
+    // Generate SerialNo INSIDE the async function
+    const SerialNo = await getNextSerialNo(); // <--- CALL THE HELPER HERE
+
+    // Save to DB
     const newPayment = new FeePayment({
       SerialNo,
       userId,
@@ -52,7 +75,8 @@ exports.createFeePayment = async (req, res) => {
       feeStructureId,
       paymentDetails,
       totalPaid,
-      totalDue
+      totalDue,
+      createdAt: new Date() // Ensure createdAt is set
     });
 
     await newPayment.save();
@@ -64,7 +88,7 @@ exports.createFeePayment = async (req, res) => {
     });
   } catch (err) {
     console.error('Error in createFeePayment:', err);
-    res.status(500).json({ success: false, message: err.message || 'Internal Server Error' });
+    res.status(500).json({ success: false, message: 'Internal server error' });
   }
 };
 
@@ -85,7 +109,8 @@ exports.getAllPayments = async (req, res) => {
 
     res.status(200).json({ success: true, data: payments });
   } catch (err) {
-    res.status(500).json({ success: false, message: err.message });
+    console.error('Error in getAllPayments:', err); // Log error for debugging
+    res.status(500).json({ success: false, message: 'Internal server error' });
   }
 };
 
@@ -102,6 +127,25 @@ exports.getPaymentById = async (req, res) => {
 
     res.status(200).json({ success: true, data: payment });
   } catch (err) {
-    res.status(500).json({ success: false, message: err.message });
+    console.error('Error in getPaymentById:', err); // Log error for debugging
+    res.status(500).json({ success: false, message: 'Internal server error' });
+  }
+};
+
+// GET single payment by user ID
+exports.getpaymentbyuserid = async (req, res) => {
+  try {
+    const payment = await FeePayment.find({ userId: req.params.id })
+      // .populate('userId')
+      .populate('feeStructureId');
+
+    if (!payment) {
+      return res.status(404).json({ success: false, message: 'Payment not found' });
+    }
+
+    res.status(200).json({ success: true, data: payment });
+  } catch (err) {
+    console.error('Error in getPaymentById:', err); // Log error for debugging
+    res.status(500).json({ success: false, message: 'Internal server error' });
   }
 };

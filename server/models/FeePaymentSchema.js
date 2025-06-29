@@ -9,8 +9,7 @@ const FeeComponentPaymentSchema = new mongoose.Schema({
   },
   monthOrTerm: { type: String, required: true },       // e.g., "June", "Q1", "2025-26"
   amountPaid: { type: Number, required: true },        // Paid amount
-  paymentMode: { type: String, required: true },       // e.g., "UPI", "Cash"
-  receiptNumber: { type: String },                     // Optional receipt number
+  paymentMode: { type: String, required: true },       // e.g., "UPI", "Cash"                     // Optional receipt number
   remarks: { type: String }                            // Optional note
 });
 
