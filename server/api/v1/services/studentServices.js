@@ -25,7 +25,11 @@ const studentServices={
 
      countTotalStudent: async (body) => {
         return await studentModel.countDocuments(body);
-    }    
+    },
+     findStudentPop: async (query) => {
+        return await studentModel.findOne(query).populate('currentClass.class');
+    },  
+
 }
 
 module.exports={studentServices}
