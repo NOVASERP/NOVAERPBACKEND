@@ -26,9 +26,7 @@ const {
 exports.Login = async (req, res, next) => {
   try {
     const { userId, password } = req.body;
-    console.log(req.body)
     const isUserExist = await findUser({ userId: userId });
-    console.log("isUserExist=============",isUserExist);
     
     if (!isUserExist) {
       console.log({userId:userId});
