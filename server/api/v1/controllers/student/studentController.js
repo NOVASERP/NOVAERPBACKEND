@@ -14,6 +14,7 @@ const {
   deleteStudent,
   updateStudent,
   countTotalStudent,
+  findStudentPop
 } = studentServices;
 const { userServices } = require("../../services/userServices");
 const {
@@ -158,7 +159,7 @@ exports.studentCreation = async (req, res, next) => {
     });
 
     const paddedCount = String(count + 1).padStart(2, "0");
-    requestData.admissionNumber = `ADM${year}${requestData.currentClass.section}${requestData.currentClass.rollNumber}${paddedCount}`;
+    requestData.admissionNumber = `ADM${year}${paddedCount}`;
 
     const totalUsers = await countTotalUser();
     requestData.userId = `nova${String(totalUsers + 1).padStart(6, "0")}`;
@@ -166,7 +167,7 @@ exports.studentCreation = async (req, res, next) => {
     for (const key of Object.keys(proof)) {
       const url = await commonFunction.getSecureUrl(
         proof[key],
-        "studentProofs" 
+        "studentProofs"
       );
       requestData.proof[key] = { image: url };
     }
@@ -210,16 +211,16 @@ exports.getAllStudent = async (req, res, next) => {
 
 exports.editStudentDetails = async (req, res, next) => {
   try {
-    const {} = req.body;
-    const isAdminExist = await a();
-    if (!isAdminExist) {
-      return res.status(statusCode.OK).send({
-        statusCode: statusCode.badRequest,
-        responseMessage: responseMessage.UNAUTHORIZED,
-      });
-    }
+    const {studentdId} = req.body;
+    // const isAdminExist = await a();
+    // if (!isAdminExist) {
+    //   return res.status(statusCode.OK).send({
+    //     statusCode: statusCode.badRequest,
+    //     responseMessage: responseMessage.UNAUTHORIZED,
+    //   });
+    // }
     const obj = {};
-    const updateProfile = await updateStudent({ _id: stdId }, { obj });
+    const updateProfile = await updateStudent({ _id: studentdId }, { obj });
     return res.status(statusCode.OK).send({
       statusCode: statusCode.OK,
       responseMessage: responseMessage.UPDATE_SUCCESS,
@@ -235,3 +236,22 @@ exports.deleteSTudents = async (req, res, next) => {
   try {
   } catch (error) {}
 };
+
+exports.getStudentById=async(req,res,next)=>{
+  try {
+    const result=await findStudentPop({_id:req.params.studentId});
+     if (result.length < 1) {
+      return res.status(statusCode.OK).send({
+        statusCode: statusCode.NotFound,
+        responseMessage: responseMessage.DATA_NOT_FOUND,
+      });
+    }
+    return res.status(statusCode.OK).send({
+      statusCode: statusCode.OK,
+      responseMessage: responseMessage.DATA_FOUND,
+      result: result,
+    });
+  } catch (error) {
+    return next(error);
+  }
+}

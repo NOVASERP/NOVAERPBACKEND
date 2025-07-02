@@ -16,5 +16,6 @@ router.post(
   studentController.studentCreation
 );
 router.get("/getStudentList", studentController.getAllStudent);
+router.get("/getStudentById/:studentId", studentController.getStudentById);
 
 module.exports = router;
