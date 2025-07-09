@@ -12,6 +12,9 @@ const userSchema=new mongoose.Schema({
     role:{type:String,enum:[roleType.ADMIN,roleType.NON_TEACHING,roleType.PARENTS,roleType.STUDENT,roleType.SUBADMIN,roleType.TEACHER]},
     userCount:{type:Number},
     status: { type: String,enum: Object.values(status), default: status.ACTIVE },
+     qrCode: {
+      type: String, 
+    },
 },{timestamps:true})
 
 module.exports = mongoose.model("users", userSchema);

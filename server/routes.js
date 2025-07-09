@@ -9,6 +9,9 @@ const feePaymentRoutes = require('./api/v1/controllers/FeeStructure/feePaymentRo
 const subjectRoutes = require('./api/v1/controllers/subject/subjectRoutes');
 const holidayRoutes = require('./api/v1/controllers/holiday/holidayRoutes');
 const inquiryRoutes = require('./api/v1/controllers/inquires/inquiryRoutes');
+const attendanceRoutes = require('./api/v1/controllers/attendance/attendance');
+
+
 module.exports = function routes(app) {
   app.use("/novaerp/api/v1/student", studentRoutes);
   app.use("/novaerp/api/v1/staff", staffRoutes);
@@ -21,4 +24,6 @@ module.exports = function routes(app) {
    app.use("/novaerp/api/v1/subject", subjectRoutes);
    app.use('/novaerp/api/v1/holiday', holidayRoutes);
    app.use('/novaerp/api/v1/inquiry', inquiryRoutes);
+   app.use("/novaerp/api/v1/user", userRoutes);
+  app.use('/novaerp/api/v1/attendance', attendanceRoutes);
 };

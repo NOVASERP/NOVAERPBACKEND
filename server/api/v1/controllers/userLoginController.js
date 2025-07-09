@@ -22,12 +22,21 @@ const {
   updateUser,
   countTotalUser,
 } = userServices;
-
+const { studentServices } = require("../services/studentServices");
+const {
+  createStudent,
+  findStudent,
+  findStudentData,
+  deleteStudent,
+  updateStudent,
+  countTotalStudent,
+  findStudentPop,
+} = studentServices;
 exports.Login = async (req, res, next) => {
   try {
     const { userId, password } = req.body;
     const isUserExist = await findUser({ userId: userId });
-    
+   
     if (!isUserExist) {
       console.log({userId:userId});
       return res.status(statusCode.OK).send({
@@ -45,7 +54,7 @@ exports.Login = async (req, res, next) => {
         });
     }
     const payload = {
-      _id: isUserExist._id,
+      userId: isUserExist.userId,
       role: isUserExist.role,
     };
     const getToken = await commonFunction.getToken(payload);
@@ -60,3 +69,25 @@ exports.Login = async (req, res, next) => {
     return next(error);
   }
 };
+ 
+exports.getProfileDetails=async(req,res,next)=>{
+  try {
+    const isUserExist=await findUser({userId:req.userId});
+   
+    let userDetails;
+    if(isUserExist.role==userType.STUDENT){
+       userDetails=await findStudent({userId:isUserExist.userId});
+    }else{
+       userDetails=await findStaff({userId:isUserExist.userId});
+    }
+     return res
+      .status(statusCode.OK)
+      .json({
+        statusCode: statusCode.OK,
+        responseMessage: responseMessage.PROFILE_GET,
+        result: userDetails
+      });
+  } catch (error) {
+   return next(error);
+  }
+}
