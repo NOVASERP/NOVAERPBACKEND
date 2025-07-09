@@ -7,13 +7,14 @@ cloudinary.config({
   api_key: process.env.API_KEY,
   api_secret: process.env.API_SECRET,
 });
-
-
-
+const jwtSecret=process.env.JWT_SECRET
+ 
+ 
 module.exports = {
   getToken: async (payload) => {
     try {
-      const token = jwt.sign(payload, "charu", { expiresIn: "24" });
+     
+      const token = jwt.sign(payload, jwtSecret, { expiresIn: "24h" });
       return token;
     } catch (error) {
       return error;
@@ -37,12 +38,12 @@ module.exports = {
     try {
       const data = await cloudinary.v2.uploader.upload(base64, {
         folder: folderName, // optional folder
-      });
-      console.log("data.secure_url==",data.secure_url);
-      
+      });      
       return data.secure_url;
     } catch (error) {
       return error;
     }
   },
 };
+ 
+ 

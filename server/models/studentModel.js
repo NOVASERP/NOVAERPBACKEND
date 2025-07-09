@@ -1,80 +1,129 @@
 const mongoose = require("mongoose");
 const genderType = require("../enum/genderType");
 const userType = require("../enum/userType");
-const status = require("../enum/status");
+const statusEnum = require("../enum/status");
+const StudentCounter = require("./studentCounterModel");
 mongoose.pluralize(null);
-
+const proofSchema = new mongoose.Schema(
+  {
+    aadharCard: {
+      image: { type: String },
+      aadharNo: { type: String },
+    },
+    birthCertificate: { image: { type: String } },
+    tc: { image: { type: String } },
+  },
+  { _id: false }
+);
 const studentSchema = new mongoose.Schema(
   {
-    firstName: { type: String },
-     middleName: { type: String },
-    lastName: { type: String },
-    dateOfBirth: { type: Date },
-    gender: {
-      type: String,
-      enum: [genderType.FEMALE, genderType.MALE, genderType.OTHER],
-    },
-    phoneNumber: { type: String },
-    email: { type: String },
+    firstName: String,
+    middleName: String,
+    lastName: String,
+    dateOfBirth: String,
+    gender: { type: String, enum: Object.values(genderType) },
+    phoneNumber: String,
+    email: String,
+ 
     address: {
-      homeTown: { type: String },
-      city: { type: String },
-      state: { type: String },
-      pinCode: { type: String },
+      homeTown: String,
+      city: String,
+      state: String,
+      pinCode: String,
     },
+ 
     parentsDetails: {
-      fatherName: { type: String },
-      motherName: { type: String },
-      guardianName: { type: String },
-      guardianPhone: { type: String },
-      guardianRelationship: { type: String },
+      fatherName: String,
+      motherName: String,
+      guardianName: String,
+      guardianPhone: String,
+      guardianRelationship: String,
     },
     currentClass: {
-      class: { type: mongoose.Types.ObjectId, ref: "Class" },
-      section: { type: String },
-      rollNumber: { type: String },
+      class: String,
+      classId: { type: mongoose.Types.ObjectId, ref: "Class" },
+      section: String,
+      rollNumber: String,
+      admissionDate: { type: Date, default: Date.now },
     },
     classHistory: [
       {
-        class: { type: mongoose.Types.ObjectId, ref: "Class" },
-        section: { type: String },
-        rollNumber: { type: String },
-        sessionYear: { type: String },
-        admissionDate: { type: Date },
+        class: String,
+        classId: { type: mongoose.Types.ObjectId, ref: "Class" },
+        section: String,
+        rollNumber: String,
+        sessionYear: String,
+        admissionDate: Date,
       },
     ],
-
     userType: { type: String, default: userType.STUDENT },
-    examResults: [
-      {
-        type: mongoose.Types.ObjectId,
-        ref: "ExamResult",
-      },
-    ],
-    status: { type: String,enum: Object.values(status), default: status.ACTIVE },
-    password: { type: String},
+    examResults: [{ type: mongoose.Types.ObjectId, ref: "ExamResult" }],
+    status: {
+      type: String,
+      enum: Object.values(statusEnum),
+      default: statusEnum.ACTIVE,
+    },
+    password: String,
     admissionNumber: { type: String, unique: true },
     addedBy: { type: mongoose.Types.ObjectId, ref: "Staff" },
-    studentImage: { type: String },
-    bloodGroup: { type: String },
+    studentImage: String,
+    bloodGroup: String,
+ 
     emergencyContact: {
-      name: { type: String },
-      relationship: { type: String },
-      contactNumber: { type: String },
+      name: String,
+      relationship: String,
+      contactNumber: String,
     },
-    proof: {
-      aadharCard: { image: { type: String }, aadharNo: { type: String } },
-      birthCertificate: { image: { type: String } },
-      tc: { image: { type: String } },
-    },
-    religion: { type: String },
-    casteCategory: { type: String }, // e.g., General, OBC, SC, ST
-    nationality: { type: String },
-    languagesKnown: [{ type: String }],
+ 
+    proof: proofSchema,
+ 
+    religion: String,
+    casteCategory: String,
+    nationality: String,
+    languagesKnown: [String],
     disability: { type: Boolean, default: false },
-    userId: { type: String },
+ 
+    userId: String,
   },
   { timestamps: true }
 );
-
+ 
+studentSchema.pre("save", async function (next) {
+  // Only for brand‑new student docs
+  if (!this.isNew || this.admissionNumber) return next();
+ 
+  try {
+    const year = new Date(this.currentClass.admissionDate).getFullYear();
+    const classId = this.currentClass.classId;
+    const section = this.currentClass.section;
+ 
+    // Atomically increment & get the next sequence
+    const counter = await StudentCounter.findOneAndUpdate(
+      { year, classId, section },
+      { $inc: { seq: 1 } },
+      { new: true, upsert: true }
+    );
+ 
+    const seq = counter.seq; // 1,2,3…
+    const seqPadded = String(seq).padStart(3, "0");
+ 
+    // Build IDs
+    this.admissionNumber = `ADM${year}${this.currentClass.class}${section}${seqPadded}`;
+   
+    this.currentClass.rollNumber = String(seq);
+ 
+    // Mirror into first history entry
+    if (Array.isArray(this.classHistory) && this.classHistory[0]) {
+      this.classHistory[0].rollNumber = String(seq);
+      // this.classHistory[0].sessionYear = String(year);
+    }
+ 
+    next();
+  } catch (err) {
+    next(err);
+  }
+});
+ 
 module.exports = mongoose.model("students", studentSchema);
+ 
+ 
