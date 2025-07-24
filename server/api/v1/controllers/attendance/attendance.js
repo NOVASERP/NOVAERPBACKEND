@@ -11,6 +11,7 @@ router.post('/mark', async (req, res) => {
     // Find user by QR code
     const _id=qrcode_id;
     const user = await Users.findOne({ _id });
+    console.log("User found:", user,_id);
     if (!user) return res.status(404).json({ message: 'User not found' });
 
     const todayDate = new Date().toISOString().split('T')[0]; // Format: YYYY-MM-DD
