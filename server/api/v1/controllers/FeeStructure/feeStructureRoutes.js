@@ -6,5 +6,6 @@ const feeStructureController = require('./feeStructureController');
 router.post('/createfeestructure', feeStructureController.createFeeStructure);
 router.get('/getfeestructure', feeStructureController.getAllFeeStructures);
 router.put('/update/:id', feeStructureController.updateFeeStructureById);
+router.delete('/delete/:id', feeStructureController.deleteFeeStructure);
 
 module.exports = router;

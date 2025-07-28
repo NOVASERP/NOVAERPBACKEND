@@ -17,5 +17,5 @@ router.post(
 );
 router.get("/getStudentList", studentController.getAllStudent);
 router.get("/getStudentById/:studentId", studentController.getStudentById);
-
+router.get('/admissions/currentSession', studentController.getStudentsAdmittedInCurrentSession);
 module.exports = router;

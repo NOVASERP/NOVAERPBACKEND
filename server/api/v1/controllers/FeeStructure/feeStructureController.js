@@ -133,3 +133,23 @@ exports.updateFeeStructureById = async (req, res) => {
     res.status(500).json({ success: false, message: 'Server Error', error: error.message });
   }
 };
+exports.deleteFeeStructure = async (req, res) => {
+    try {
+        const { id } = req.params;
+
+        const deletedFeeStructure = await FeeStructure.findByIdAndDelete(id);
+
+        if (!deletedFeeStructure) {
+            return res.status(404).json({ success: false, message: 'Fee structure not found' });
+        }
+
+        res.status(200).json({
+            success: true,
+            message: 'Fee structure deleted successfully',
+            data: {} // No data needed on successful deletion
+        });
+    } catch (error) {
+        console.error('Delete Error:', error);
+        res.status(500).json({ success: false, message: 'Server Error', error: error.message });
+    }
+};
