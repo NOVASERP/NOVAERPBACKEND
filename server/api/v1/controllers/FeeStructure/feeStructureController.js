@@ -1,9 +1,7 @@
 // api/v1/controllers/admin/feeStructureController.js
 const FeeStructure = require('../../../../models/FeeStructure');
 const { validationResult } = require('express-validator');
-const Class = require('../../../../models/classModel');
-
-
+const Class = require('../../../../models/classModel'); // Assuming this is used elsewhere or for future features
 
 exports.createFeeStructure = async (req, res) => {
   try {
@@ -62,14 +60,40 @@ exports.createFeeStructure = async (req, res) => {
   }
 };
 
-
+// MODIFIED FUNCTION: Now filters by className and term from query parameters
 exports.getAllFeeStructures = async (req, res) => {
   try {
-    const structures = await FeeStructure.find().sort({ term: -1, className: 1 });
+    const { className, term } = req.query; // Extract className and term from query parameters
+
+    let query = {}; // Initialize an empty query object
+
+    // If className is provided in the query, add it to the filter
+    if (className) {
+      query.className = className;
+    }
+
+    // If term is provided in the query, add it to the filter
+    if (term) {
+      query.term = term;
+    }
+
+    // Find fee structures based on the constructed query
+    // If no className or term is provided, 'query' will be empty, fetching all documents.
+    const structures = await FeeStructure.find(query).sort({ term: -1, className: 1 });
+
+    // Optional: If you strictly expect only one result per className/term combination
+    // and want to send a 404 if none, you can add this check:
+    // if (structures.length === 0 && (className || term)) {
+    //   return res.status(404).json({
+    //     success: false,
+    //     message: 'No fee structure found for the specified class and term.'
+    //   });
+    // }
+
     res.status(200).json({
       success: true,
       count: structures.length,
-      data: structures
+      data: structures // This will be an empty array if no match is found
     });
   } catch (error) {
     console.error('Error fetching fee structures:', error);
@@ -90,7 +114,7 @@ exports.updateFeeStructureById = async (req, res) => {
       {
         className,
         term,
-        feeBreakdown
+        feeBreakdown // You might want to re-calculate totals here too, similar to createFeeStructure
       },
       { new: true }
     );
@@ -109,4 +133,23 @@ exports.updateFeeStructureById = async (req, res) => {
     res.status(500).json({ success: false, message: 'Server Error', error: error.message });
   }
 };
+exports.deleteFeeStructure = async (req, res) => {
+    try {
+        const { id } = req.params;
 
+        const deletedFeeStructure = await FeeStructure.findByIdAndDelete(id);
+
+        if (!deletedFeeStructure) {
+            return res.status(404).json({ success: false, message: 'Fee structure not found' });
+        }
+
+        res.status(200).json({
+            success: true,
+            message: 'Fee structure deleted successfully',
+            data: {} // No data needed on successful deletion
+        });
+    } catch (error) {
+        console.error('Delete Error:', error);
+        res.status(500).json({ success: false, message: 'Server Error', error: error.message });
+    }
+};

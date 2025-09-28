@@ -7,6 +7,8 @@ const jwt = require("jsonwebtoken");
 const commonFunction = require("../../../../helpers/utils");
 const { studentServices } = require("../../services/studentServices");
 const status = require("../../../../enum/status");
+const Student = require('../../../../models/studentModel'); // Import studentModel directly for .aggregate()
+
 const {
   createStudent,
   findStudent,
@@ -356,5 +358,108 @@ exports.getStudentById = async (req, res, next) => {
     return next(error);
   }
 };
- 
- 
+/*=========================================================================================
+NAME:- ANURAG YADAV
+DATE:- 20/10/2023
+DESCRIPTION:- This function fetches the list of students admitted in the current academic session.
+==========================================================================================*/
+exports.getStudentsAdmittedInCurrentSession = async (req, res) => {
+    try {
+        const currentDate = new Date();
+        let academicSessionStartYear = currentDate.getFullYear();
+        // Adjust this logic based on your school's actual academic year start month.
+        // As of July 26, 2025: getFullYear() is 2025. getMonth() is 6 (July). 6 < 6 is false.
+        // So academicSessionStartYear remains 2025. currentAcademicSessionYear will be "2025-2026".
+        if (currentDate.getMonth() < 6) { // If academic year starts in July (month 6 is July)
+            academicSessionStartYear = currentDate.getFullYear() - 1;
+        }
+        const currentAcademicSessionYear = `${academicSessionStartYear}-${academicSessionStartYear + 1}`;
+
+        console.log(`Debug: Current Academic Session Year being queried: ${currentAcademicSessionYear}`);
+
+        // <<< AGGREGATION PIPELINE DEFINED DIRECTLY IN CONTROLLER >>>
+        const newlyAdmittedStudents = await Student.aggregate([
+            // Stage 1: Initial match to filter documents that have *any* classHistory entry for the current academic session year.
+            // This is an optimization.
+            {
+                $match: {
+                    'classHistory.sessionYear': currentAcademicSessionYear
+                }
+            },
+            // Stage 2: Unwind the classHistory array to create a separate document for each history entry.
+            {
+                $unwind: '$classHistory'
+            },
+            // Stage 3: CRUCIAL SORT STAGE
+            // Sort classHistory entries by admissionDate ascending for each student.
+            // This ensures that when we group by student ID, $first will correctly pick the *earliest* history entry.
+            {
+                $sort: {
+                    '_id': 1, // Keep documents from the same student together
+                    'classHistory.admissionDate': 1 // Sort by admission date ascending (oldest first)
+                }
+            },
+            // Stage 4: Group documents by student ID to process them individually.
+            // We capture the relevant fields and specifically the *first* classHistory entry.
+            {
+                $group: {
+                    _id: '$_id', // Group by student's unique ID
+                    firstName: { $first: '$firstName' },
+                    middleName: { $first: '$middleName' },
+                    lastName: { $first: '$lastName' },
+                    admissionNumber: { $first: '$admissionNumber' },
+                    userId: { $first: '$userId' },
+                    currentClass: { $first: '$currentClass' }, // Capture currentClass details
+                    firstClassHistoryEntry: { $first: '$classHistory' } // This is the earliest class history entry
+                }
+            },
+            // Stage 5: Filter again. Now, we strictly match students whose *first* (earliest) classHistory entry's
+            // sessionYear matches the current academic session year. This precisely identifies "new" admissions for this year.
+            {
+                $match: {
+                    'firstClassHistoryEntry.sessionYear': currentAcademicSessionYear
+                }
+            },
+            // Stage 6: Sort the final results by the admission date of their first history entry, descending (most recent first).
+            // This orders the newly admitted students from newest to oldest for display on the dashboard.
+            {
+                $sort: {
+                    'firstClassHistoryEntry.admissionDate': -1
+                }
+            },
+            // Stage 7: Project to shape the output document, including only the necessary fields for the frontend.
+            {
+                $project: {
+                    _id: 1,
+                    firstName: 1,
+                    middleName: 1,
+                    lastName: 1,
+                    admissionNumber: 1,
+                    userId: 1,
+                    'currentClass.class': '$currentClass.class', // Reconstruct currentClass fields
+                    'currentClass.section': '$currentClass.section',
+                    // Use the admissionDate from their *first* entry in the current academic session
+                    'currentClass.admissionDate': '$firstClassHistoryEntry.admissionDate',
+                    classHistory: ['$firstClassHistoryEntry'] // Send only this relevant history entry
+                }
+            }
+        ]);
+        // <<< END AGGREGATION PIPELINE >>>
+
+        console.log(`Debug: Found ${newlyAdmittedStudents.length} newly admitted students for ${currentAcademicSessionYear}`);
+
+        res.status(200).json({
+            statusCode: 200,
+            responseMessage: `Students admitted in ${currentAcademicSessionYear} fetched successfully`,
+            result: newlyAdmittedStudents
+        });
+
+    } catch (error) {
+        console.error('Error in getStudentsAdmittedInCurrentSession:', error);
+        res.status(500).json({
+            statusCode: 500,
+            responseMessage: 'Server error while fetching current session admissions',
+            error: error.message
+        });
+    }
+};

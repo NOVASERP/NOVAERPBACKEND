@@ -1,151 +1,173 @@
 const FeePayment = require('../../../../models/FeePaymentSchema');
 const FeeStructure = require('../../../../models/FeeStructure');
-const Student = require('../../../../models/studentModel'); // Make sure this model is used if needed, otherwise it's just an import
+const Student = require('../../../../models/studentModel'); // Keep this if you plan to use it later, otherwise it's just an import
 
 // Helper: Function to get the next serial number
 async function getNextSerialNo() {
-  try {
-    const latestPayment = await FeePayment.findOne().sort({ SerialNo: -1 }).lean();
-    // Use .lean() for faster retrieval as we only need the data, not a full Mongoose document
-
-    // If there's a latest payment, increment its SerialNo. Otherwise, start from 1.
-    return latestPayment ? latestPayment.SerialNo + 1 : 1;
-  } catch (error) {
-    console.error("Error generating SerialNo:", error);
-    // Depending on your error handling strategy, you might want to throw an error,
-    // or return a default/fallback value. For simplicity, let's throw.
-    throw new Error("Failed to generate Serial Number for fee payment.");
-  }
+    try {
+        const latestPayment = await FeePayment.findOne().sort({ SerialNo: -1 }).lean();
+        return latestPayment ? latestPayment.SerialNo + 1 : 1;
+    } catch (error) {
+        console.error("Error generating SerialNo:", error);
+        throw new Error("Failed to generate Serial Number for fee payment.");
+    }
 }
 
-// Helper: Calculate total paid from paymentDetails
+// Helper: Calculate total paid from paymentDetails array
 const calculateTotalPaid = (paymentDetails) => {
-  return paymentDetails.reduce((sum, comp) => sum + (comp.amountPaid || 0), 0);
+    return paymentDetails.reduce((sum, comp) => sum + (comp.amountPaid || 0), 0);
 };
 
 exports.createFeePayment = async (req, res) => {
-  try {
-    const {
-      userId,
-      admissionNumber,
-      class: studentClass,
-      section,
-      academicYear,
-      feeStructureId,
-      paymentDetails
-    } = req.body;
-    console.log(feeStructureId);
+    try {
+        const {
+            userId,
+            admissionNumber,
+            class: studentClass,
+            section,
+            academicYear,
+            feeStructureId,
+            paymentDetails
+        } = req.body;
 
-    // Check required fields
-    if (!userId || !admissionNumber || !studentClass || !section || !academicYear || !feeStructureId || !paymentDetails?.length) {
-      return res.status(400).json({ success: false, message: 'Missing required fields' });
+        // 1. Basic Validation
+        if (!userId || !admissionNumber || !studentClass || !section || !academicYear || !feeStructureId || !paymentDetails?.length) {
+            return res.status(400).json({ success: false, message: 'Missing required fields for fee payment.' });
+        }
+
+        // 2. Calculate the total amount paid in *this specific transaction*
+        const actualTotalPaidForThisTransaction = calculateTotalPaid(paymentDetails);
+        if (actualTotalPaidForThisTransaction <= 0) {
+            return res.status(400).json({ success: false, message: 'Total amount paid must be greater than zero.' });
+        }
+
+        // 3. Get the Fee Structure for the academic year
+        const feeStructure = await FeeStructure.findById(feeStructureId);
+        if (!feeStructure) {
+            return res.status(404).json({ success: false, message: 'Associated fee structure not found.' });
+        }
+
+        // Calculate the total annual due from the fee structure
+        // This is the fixed total amount for the year from the structure itself
+        const totalAnnualFeeStructureAmount =
+            (feeStructure.totalMonthly || 0) +
+            (feeStructure.totalYearly || 0) +
+            (feeStructure.totalQuarterly || 0) +
+            (feeStructure.totalHalfYearly || 0);
+
+        // 4. Calculate the OVERALL amount paid for this student in this academic year *before* this transaction
+        const previousPaymentsForThisYear = await FeePayment.find({
+            userId: userId,
+            academicYear: academicYear
+        }).lean(); // Use .lean() for efficiency as we only need sums
+
+        const totalPaidBeforeThisTransaction = previousPaymentsForThisYear.reduce((sum, payment) => sum + (payment.totalPaid || 0), 0);
+
+        // 5. Calculate the new OVERALL total paid and remaining due for the academic year
+        const newOverallTotalPaidForYear = totalPaidBeforeThisTransaction + actualTotalPaidForThisTransaction;
+        const newRemainingDueForYear = Math.max(0, totalAnnualFeeStructureAmount - newOverallTotalPaidForYear);
+
+        // 6. Generate SerialNo
+        const SerialNo = await getNextSerialNo();
+
+        // 7. Save the new payment record
+        const newPayment = new FeePayment({
+            SerialNo,
+            userId,
+            admissionNumber,
+            class: studentClass,
+            section,
+            academicYear,
+            feeStructureId,
+            paymentDetails,
+            totalPaid: actualTotalPaidForThisTransaction, // Amount paid in *this* transaction
+            totalDue: totalAnnualFeeStructureAmount,    // The *original* total due for the academic year
+            remainingDue: newRemainingDueForYear,       // The *remaining outstanding balance* after this transaction
+            createdAt: new Date()
+        });
+
+        await newPayment.save();
+
+        res.status(201).json({
+            success: true,
+            message: 'Fee payment recorded successfully.',
+            data: newPayment,
+            // You can also send the updated overall status to the frontend
+            currentRemainingDueForAcademicYear: newRemainingDueForYear,
+            currentOverallPaidForAcademicYear: newOverallTotalPaidForYear
+        });
+
+    } catch (err) {
+        console.error('Error in createFeePayment:', err);
+        res.status(500).json({ success: false, message: 'Internal server error during fee payment processing.' });
     }
-
-    // Get fee structure
-    const feeStructure = await FeeStructure.findById(feeStructureId);
-    if (!feeStructure) {
-      return res.status(404).json({ success: false, message: 'Fee structure not found' });
-    }
-
-    // Total paid from paymentDetails
-    const totalPaid = calculateTotalPaid(paymentDetails);
-    if (totalPaid <= 0) {
-      return res.status(400).json({ success: false, message: 'Total paid must be greater than zero' });
-    }
-    console.log(feeStructure.totalMonthly, feeStructure.totalYearly, feeStructure.totalQuarterly, feeStructure.totalHalfYearly, totalPaid);
-
-    // Calculate due
-    const totalDue =
-      (feeStructure.totalMonthly || 0) +
-      (feeStructure.totalYearly || 0) +
-      (feeStructure.totalQuarterly || 0) +
-      (feeStructure.totalHalfYearly || 0) - totalPaid;
-
-    // Generate SerialNo INSIDE the async function
-    const SerialNo = await getNextSerialNo(); // <--- CALL THE HELPER HERE
-
-    // Save to DB
-    const newPayment = new FeePayment({
-      SerialNo,
-      userId,
-      admissionNumber,
-      class: studentClass,
-      section,
-      academicYear,
-      feeStructureId,
-      paymentDetails,
-      totalPaid,
-      totalDue,
-      createdAt: new Date() // Ensure createdAt is set
-    });
-
-    await newPayment.save();
-
-    res.status(201).json({
-      success: true,
-      message: 'Fee payment recorded successfully',
-      data: newPayment
-    });
-  } catch (err) {
-    console.error('Error in createFeePayment:', err);
-    res.status(500).json({ success: false, message: 'Internal server error' });
-  }
 };
 
-// GET all payments (optionally filter)
+// GET all payments (optionally filter) - No changes needed here, as it retrieves what's saved
 exports.getAllPayments = async (req, res) => {
-  try {
-    const { userId, class: studentClass, academicYear, admissionNumber } = req.query;
+    try {
+        const { userId, class: studentClass, academicYear, admissionNumber } = req.query;
 
-    const filter = {};
-    if (userId) filter.userId = userId;
-    if (studentClass) filter.class = studentClass;
-    if (academicYear) filter.academicYear = academicYear;
-    if (admissionNumber) filter.admissionNumber = admissionNumber;
+        const filter = {};
+        if (userId) filter.userId = userId;
+        if (studentClass) filter.class = studentClass;
+        if (academicYear) filter.academicYear = academicYear;
+        if (admissionNumber) filter.admissionNumber = admissionNumber;
 
-    const payments = await FeePayment.find(filter)
-      .populate('userId', 'firstName lastName admissionNumber') // populate student basic details
-      .populate('feeStructureId'); // optional
+        const payments = await FeePayment.find(filter)
+            .populate('userId', 'firstName lastName admissionNumber') // populate student basic details
+            .populate('feeStructureId'); // optional
 
-    res.status(200).json({ success: true, data: payments });
-  } catch (err) {
-    console.error('Error in getAllPayments:', err); // Log error for debugging
-    res.status(500).json({ success: false, message: 'Internal server error' });
-  }
+        res.status(200).json({ success: true, data: payments });
+    } catch (err) {
+        console.error('Error in getAllPayments:', err); // Log error for debugging
+        res.status(500).json({ success: false, message: 'Internal server error' });
+    }
 };
 
-// GET single payment by ID
+// GET single payment by ID - No changes needed here
 exports.getPaymentById = async (req, res) => {
-  try {
-    const payment = await FeePayment.findById(req.params.id)
-      .populate('userId')
-      .populate('feeStructureId');
+    try {
+        const payment = await FeePayment.findById(req.params.id)
+            .populate('userId')
+            .populate('feeStructureId');
 
-    if (!payment) {
-      return res.status(404).json({ success: false, message: 'Payment not found' });
+        if (!payment) {
+            return res.status(404).json({ success: false, message: 'Payment not found' });
+        }
+
+        res.status(200).json({ success: true, data: payment });
+    } catch (err) {
+        console.error('Error in getPaymentById:', err); // Log error for debugging
+        res.status(500).json({ success: false, message: 'Internal server error' });
     }
-
-    res.status(200).json({ success: true, data: payment });
-  } catch (err) {
-    console.error('Error in getPaymentById:', err); // Log error for debugging
-    res.status(500).json({ success: false, message: 'Internal server error' });
-  }
 };
 
-// GET single payment by user ID
+// GET single payment by user ID (getpaymentbyuserid) - No changes needed here, as it retrieves what's saved
+const mongoose = require('mongoose');
+
 exports.getpaymentbyuserid = async (req, res) => {
-  try {
-    const payment = await FeePayment.find({ userId: req.params.id })
-      // .populate('userId')
-      .populate('feeStructureId');
+    try {
+        const { id } = req.params;
 
-    if (!payment) {
-      return res.status(404).json({ success: false, message: 'Payment not found' });
+        // Validate ObjectId first
+        if (!mongoose.Types.ObjectId.isValid(id)) {
+            return res.status(400).json({ success: false, message: 'Invalid user ID' });
+        }
+
+        // Convert string ID to ObjectId
+        const objectId = new mongoose.Types.ObjectId(id);
+
+        const payment = await FeePayment.find({ userId: objectId })
+            .populate('feeStructureId');
+
+        if (!payment || payment.length === 0) {
+            return res.status(404).json({ success: false, message: 'No payments found for this user' });
+        }
+
+        res.status(200).json({ success: true, data: payment });
+    } catch (err) {
+        console.error('Error in getpaymentbyuserid:', err);
+        res.status(500).json({ success: false, message: 'Internal server error' });
     }
-
-    res.status(200).json({ success: true, data: payment });
-  } catch (err) {
-    console.error('Error in getPaymentById:', err); // Log error for debugging
-    res.status(500).json({ success: false, message: 'Internal server error' });
-  }
 };
