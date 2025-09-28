@@ -11,6 +11,10 @@ const holidayRoutes = require('./api/v1/controllers/holiday/holidayRoutes');
 const inquiryRoutes = require('./api/v1/controllers/inquires/inquiryRoutes');
 const attendanceRoutes = require('./api/v1/controllers/attendance/attendance');
 const feeTypeRoutes = require('./api/v1/controllers/FeeStructure/feeRoutes'); 
+const transportRoutes = require('./api/v1/controllers/FeeStructure/transportRoutes');
+const fineRoutes =require('./api/v1/controllers/FeeStructure/fineRoutes')
+const discountRoutes = require('./api/v1/controllers/FeeStructure/discountRoutes'); // Import the discount routes
+ // Assuming this is the correct path
 module.exports = function routes(app) {
   app.use("/novaerp/api/v1/student", studentRoutes);
   app.use("/novaerp/api/v1/staff", staffRoutes);
@@ -26,5 +30,7 @@ module.exports = function routes(app) {
    app.use("/novaerp/api/v1/user", userRoutes);
   app.use('/novaerp/api/v1/attendance', attendanceRoutes);
    app.use("/novaerp/api/v1/fee-type", feeTypeRoutes);
-  
+    app.use("/novaerp/api/v1/Transport", transportRoutes);
+  app.use("/novaerp/api/v1/Transport", fineRoutes);
+  app.use('/novaerp/api/v1/discounts', discountRoutes)
 };
